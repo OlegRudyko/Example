@@ -1,8 +1,10 @@
 import { TranslationObject } from 'libs/i18n';
 import React from 'react';
+import { Dimensions } from 'react-native';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 import styled from 'styled-components/native';
 import { Language } from 'types';
-import { AppText } from 'ui';
+import { AppText, SkeletonContainer } from 'ui';
 
 import CoinChart from './CoinChart';
 
@@ -13,32 +15,54 @@ type AboutCoinProps = {
   coin: TranslationObject['screens']['coin'];
   info: any;
   transformValue: (val: number, locale: Language) => string;
+  isLoadInfo: boolean;
 };
 
-const AboutCoin: React.FC<AboutCoinProps> = ({ currency, locale, symbol, coin, info, transformValue }) => {
+const IDENT_SKELETON = 20;
+
+const AboutCoin: React.FC<AboutCoinProps> = ({ currency, locale, symbol, coin, info, transformValue, isLoadInfo }) => {
+  const { width } = Dimensions.get('screen');
+
   return (
     <MainCoin>
       <CoinChart currency={currency} />
-      <InfoRow>
-        <InfoItem style={{ marginRight: 8 }}>
-          <Text variant="bodyRegular">{coin.tabs.about.capitalization}</Text>
-          <BoldText variant="title18Bold">{transformValue(info && info.capitalization[symbol], locale)}</BoldText>
-        </InfoItem>
-        <InfoItem>
-          <Text variant="bodyRegular">{coin.tabs.about.volume}</Text>
-          <BoldText variant="title18Bold">{transformValue(info && info.volume_24h[symbol], locale)}</BoldText>
-        </InfoItem>
-      </InfoRow>
-      <InfoRow>
-        <InfoItem style={{ marginRight: 8 }}>
-          <Text variant="bodyRegular">{coin.tabs.about.maximum}</Text>
-          <BoldText variant="title18Bold">{transformValue(info && info.history_max[symbol], locale)}</BoldText>
-        </InfoItem>
-        <InfoItem>
-          <Text variant="bodyRegular">{coin.tabs.about.rating}</Text>
-          <BoldText variant="title18Bold">#{info && info.rate}</BoldText>
-        </InfoItem>
-      </InfoRow>
+      {isLoadInfo && (
+        <SkeletonContainer>
+          <SkeletonPlaceholder.Item flexDirection="row" justifyContent="space-between" marginBottom={8} marginTop={8}>
+            <SkeletonPlaceholder.Item width={width / 2 - IDENT_SKELETON} height={100} borderRadius={12} />
+            <SkeletonPlaceholder.Item width={width / 2 - IDENT_SKELETON} height={100} borderRadius={12} />
+          </SkeletonPlaceholder.Item>
+
+          <SkeletonPlaceholder.Item flexDirection="row" justifyContent="space-between" width="100%">
+            <SkeletonPlaceholder.Item width={width / 2 - IDENT_SKELETON} height={100} borderRadius={12} />
+            <SkeletonPlaceholder.Item width={width / 2 - IDENT_SKELETON} height={100} borderRadius={12} />
+          </SkeletonPlaceholder.Item>
+        </SkeletonContainer>
+      )}
+      {!isLoadInfo && info !== undefined && (
+        <>
+          <InfoRow>
+            <InfoItem style={{ marginRight: 8 }}>
+              <Text variant="bodyRegular">{coin.tabs.about.capitalization}</Text>
+              <BoldText variant="title18Bold">{transformValue(info && info.capitalization[symbol], locale)}</BoldText>
+            </InfoItem>
+            <InfoItem>
+              <Text variant="bodyRegular">{coin.tabs.about.volume}</Text>
+              <BoldText variant="title18Bold">{transformValue(info && info.volume_24h[symbol], locale)}</BoldText>
+            </InfoItem>
+          </InfoRow>
+          <InfoRow>
+            <InfoItem style={{ marginRight: 8 }}>
+              <Text variant="bodyRegular">{coin.tabs.about.maximum}</Text>
+              <BoldText variant="title18Bold">{transformValue(info && info.history_max[symbol], locale)}</BoldText>
+            </InfoItem>
+            <InfoItem>
+              <Text variant="bodyRegular">{coin.tabs.about.rating}</Text>
+              <BoldText variant="title18Bold">#{info && info.rate}</BoldText>
+            </InfoItem>
+          </InfoRow>
+        </>
+      )}
     </MainCoin>
   );
 };

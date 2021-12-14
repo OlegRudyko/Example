@@ -1,19 +1,33 @@
 import { Currencies } from '__generated__/types';
+import { useNavigation } from '@react-navigation/core';
 import { ArrowAltDownIcon, ArrowAltTopIcon, ArrowDownIcon, ArrowReturnIcon, ExchangeIcon } from 'assets/svgs';
 import { useTypedTranslation } from 'hooks';
 import { TranslationObject } from 'libs/i18n';
+import AppRoutes from 'navigations/routes';
 import React from 'react';
 import styled, { useTheme } from 'styled-components/native';
 import { AppButton, AppText } from 'ui';
 
 type OperationsProps = {
-  data: Currencies;
+  data: Currencies | undefined;
 };
 
-const Operations: React.FC<OperationsProps> = ({ data = {} as Currencies }) => {
+const Operations: React.FC<OperationsProps> = ({ data = {} }) => {
   const coin = useTypedTranslation<TranslationObject['screens']['coin']>('screens.coin');
   const theme = useTheme();
   const { allowDeposit, allowWithdraw, allowExchange, allowFiatDeposit, allowFiatWithdrawal } = data;
+
+  const { navigate } = useNavigation();
+
+  const goToExchange = () => {
+    navigate(AppRoutes.CurrencyStack, {
+      screen: AppRoutes.CurrencyExchangeScreen,
+      params: {
+        currency: data,
+        isScreen: true,
+      },
+    });
+  };
 
   return (
     <Root>
@@ -24,7 +38,7 @@ const Operations: React.FC<OperationsProps> = ({ data = {} as Currencies }) => {
             {coin.operations.acceptToAddress}
           </Text>
         </BlueButton>
-        <BlueButton activeOpacity={0.8} disabled={!allowExchange}>
+        <BlueButton onPress={goToExchange} activeOpacity={0.8} disabled={!allowExchange}>
           <ExchangeIcon fill={!allowExchange ? theme.colors.primaryBlueGray : theme.colors.primaryWhite} />
           <Text isDisabled={!allowExchange} variant="caption12Bold">
             {coin.operations.change}

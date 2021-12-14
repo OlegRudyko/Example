@@ -1,12 +1,13 @@
-import { useGetMeCurrencies } from 'common/queries/__generated__/get-me-currencies.query';
 import { useTypedTranslation } from 'hooks';
 import { DefaultLayout, NestedHeader } from 'layouts';
 import { TranslationObject } from 'libs/i18n';
 import React, { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import Modal from 'react-native-modal';
+import { useSelector } from 'react-redux';
+import { selectors } from 'store';
 import styled from 'styled-components/native';
-import { AppButton, AppText, Loader } from 'ui';
+import { AppButton, AppText } from 'ui';
 
 import ListItem from './components/ListItem';
 
@@ -24,10 +25,7 @@ const CurrencyList: React.FC<CurrencyListProps> = ({ list, setList, closeModal, 
   const transactionsFilter = useTypedTranslation<TranslationObject['components']['transactionsFilter']>(
     'components.transactionsFilter',
   );
-  const { data, loading } = useGetMeCurrencies({
-    fetchPolicy: 'cache-only',
-  });
-  const fullData = [...(data?.currencies || []), ...(data?.fetchDexCurrencies || [])];
+  const fullData = useSelector(selectors.currencies.selectAllCurrenciesList);
 
   const renderResetButton = () => {
     return (
@@ -62,29 +60,25 @@ const CurrencyList: React.FC<CurrencyListProps> = ({ list, setList, closeModal, 
           renderRightElement={renderResetButton}
         />
         <Main>
-          {loading ? (
-            <Loader />
-          ) : (
-            fullData.map((item) => {
-              if (item.isFiat) {
-                return null;
-              }
+          {fullData.map((item) => {
+            if (item.isFiat) {
+              return null;
+            }
 
-              const isSelected = !!_list.find((_item) => _item.alias === item.alias);
-              return (
-                <ListItem
-                  key={item.id}
-                  id={item.id}
-                  selected={selectCurrency}
-                  isSelected={isSelected}
-                  alias={item.alias}
-                  currency={item.currency}
-                />
-              );
-            })
-          )}
+            const isSelected = !!_list.find((_item) => _item.alias === item.alias);
+            return (
+              <ListItem
+                key={item.id}
+                id={item.id}
+                selected={selectCurrency}
+                isSelected={isSelected}
+                alias={item.alias}
+                currency={item.currency}
+              />
+            );
+          })}
         </Main>
-        <Button onPress={onSubmit} label={transactionsFilter.buttons.success} isLoading={loading} />
+        <Button onPress={onSubmit} label={transactionsFilter.buttons.success} />
       </DefaultLayout>
     </Modal>
   );

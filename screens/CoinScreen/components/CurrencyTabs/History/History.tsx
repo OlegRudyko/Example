@@ -4,31 +4,35 @@ import { ModalCoinFilter } from 'components';
 import OperationsHistory from 'components/OperationsHistory';
 import { useTypedTranslation } from 'hooks';
 import { TranslationObject } from 'libs/i18n';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components/native';
-import { AppButton } from 'ui';
+import { AppButton, ItemsSkeleton } from 'ui';
 import { filtering } from 'utils';
 
 type HistoryProps = {
   currencyId: number;
   data: TransactionAllInformation[];
+  isLoadingTransactions: boolean;
 };
 
-const History: React.FC<HistoryProps> = ({ currencyId, data }) => {
+const History: React.FC<HistoryProps> = ({ currencyId, data, isLoadingTransactions }) => {
   const [operations, setOperations] = useState<TransactionAllInformation[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [filterOn, setFilterOn] = useState(false);
   const coin = useTypedTranslation<TranslationObject['screens']['coin']>('screens.coin');
 
-  const getOneCoinOperations = (data: TransactionAllInformation[]) => {
-    return data.filter((item) => filtering.filteredOperations(item, currencyId));
-  };
+  const getOneCoinOperations = useCallback(
+    (data: TransactionAllInformation[]) => {
+      return data.filter((item) => filtering.filteredOperations(item, currencyId));
+    },
+    [currencyId],
+  );
 
   useEffect(() => {
     if (data) {
       setOperations(getOneCoinOperations(data));
     }
-  }, [data]);
+  }, [data, getOneCoinOperations]);
 
   const coinOperations = getOneCoinOperations(data || []);
 
@@ -40,7 +44,7 @@ const History: React.FC<HistoryProps> = ({ currencyId, data }) => {
         label={coin.tabs.history.filterButton}
         variant="secondary"
       />
-      <OperationsHistory operations={operations} />
+      {isLoadingTransactions ? <ItemsSkeleton count={3} /> : <OperationsHistory operations={operations} />}
       <ModalCoinFilter
         isModalVisible={isModalVisible}
         closeModal={() => setIsModalVisible(false)}

@@ -47,7 +47,7 @@ export default NestedHeader;
 const Root = styled.View<{ $CSS: CSSProp }>`
   position: relative;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   height: ${HEADER_HEIGHT}px;
   ${({ $CSS }) => $CSS}
@@ -59,15 +59,6 @@ const TitleContainer = styled.View`
   margin: 0 30px;
 `;
 
-const LeftContainer = styled.View`
-  position: absolute;
-  top: 35px;
-  left: 0;
-`;
+const LeftContainer = styled.View``;
 
-const RightContainer = styled.View`
-  position: absolute;
-  top: 35px;
-  right: 0;
-  margin-left: auto;
-`;
+const RightContainer = styled.View``;

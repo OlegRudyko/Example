@@ -12,9 +12,10 @@ type AboutCurrencyProps = {
   alias: string;
   contract: string | null;
   info: any;
+  isLoadInfo: boolean;
 };
 
-const AboutCurrency: React.FC<AboutCurrencyProps> = ({ currency, token, alias, contract, info }) => {
+const AboutCurrency: React.FC<AboutCurrencyProps> = ({ currency, token, alias, contract, info, isLoadInfo }) => {
   const { i18n } = useTranslation();
   const coin = useTypedTranslation<TranslationObject['screens']['coin']>('screens.coin');
   const locale = i18n.language as Language;
@@ -63,6 +64,7 @@ const AboutCurrency: React.FC<AboutCurrencyProps> = ({ currency, token, alias, c
           locale={locale}
           symbol={symbol}
           coin={coin}
+          isLoadInfo={isLoadInfo}
         />
       )}
     </>

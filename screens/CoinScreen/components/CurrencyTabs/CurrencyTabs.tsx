@@ -1,7 +1,7 @@
 import { Currencies } from '__generated__/types';
 import { useTypedTranslation } from 'hooks';
 import { TranslationObject } from 'libs/i18n';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components/native';
 import { AppText } from 'ui';
 
@@ -11,15 +11,26 @@ import History from './History';
 type Tabs = 'about' | 'history';
 
 type CurrencyTabsProps = {
-  currency: Currencies;
+  currency: Currencies | undefined;
   operations: any;
   coinInfo: any;
+  isLoadInfo: boolean;
+  isLoadingTransactions: boolean;
 };
 
-const CurrencyTabs: React.FC<CurrencyTabsProps> = ({ currency, operations, coinInfo }) => {
+const CurrencyTabs: React.FC<CurrencyTabsProps> = ({
+  currency = {} as Currencies,
+  operations,
+  coinInfo,
+  isLoadInfo,
+  isLoadingTransactions,
+}) => {
   const [currentTab, setCurrentTab] = useState<Tabs>('about');
   const coin = useTypedTranslation<TranslationObject['screens']['coin']>('screens.coin');
-  const contract = currency.hidden && currency.networkData[0] ? currency.networkData[0].rules.contract : null;
+  const contract = useMemo(
+    () => currency.hidden && currency.networkData[0] ? currency.networkData[0].rules.contract : null,
+    [currency.hidden, currency.networkData[0]],
+  );
 
   return (
     <>
@@ -42,9 +53,10 @@ const CurrencyTabs: React.FC<CurrencyTabsProps> = ({ currency, operations, coinI
           token={currency.hidden}
           currency={currency.currency}
           info={coinInfo}
+          isLoadInfo={isLoadInfo}
         />
       ) : (
-        <History data={operations} currencyId={currency.id} />
+        <History data={operations} currencyId={currency.id} isLoadingTransactions={isLoadingTransactions} />
       )}
     </>
   );

@@ -1,12 +1,13 @@
 import { TransactionAllInformation } from '__generated__/types';
 import { ErrorIcon, InProgressIcon, SuccessIcon } from 'assets/svgs';
-import { useGetMeCurrencies } from 'common/queries/__generated__/get-me-currencies.query';
 import { useTypedTranslation } from 'hooks';
 import { TranslationObject } from 'libs/i18n';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { selectors } from 'store';
 import styled from 'styled-components/native';
 import { Operations, Status } from 'types';
-import { AppText, Loader } from 'ui';
+import { AppText } from 'ui';
 import { filterOperations, shorteredValue } from 'utils';
 
 import ModalForOperations from '../ModalForOperations';
@@ -26,47 +27,46 @@ export const statusIconMapping: Record<Status, React.ReactNode> = {
 const OperationsItem: React.FC<OperationsItemProps> = ({ operation }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const transactions = useTypedTranslation<TranslationObject['utils']['transactions']>('utils.transactions');
-  const { data, loading } = useGetMeCurrencies({
-    fetchPolicy: 'cache-only',
-  });
-  const fullData = [...(data?.currencies || []), ...(data?.fetchDexCurrencies || [])];
+  const data = useSelector(selectors.currencies.selectAllCurrenciesList);
+  const dexCurrencies = useSelector(selectors.currencies.selectCurrenciesForHistory);
+  const fullData = useMemo(() => [...data, ...dexCurrencies], [data, dexCurrencies]);
   const type: Operations = operation.type as Operations;
   const status: Status = operation.status as Status;
-  const currencyFrom = fullData.find((item) => item.id === operation.currencyFrom)?.currency;
-  const currencyTo = fullData.find((item) => item.id === operation.currencyTo)?.currency;
+  const currencyFrom = useMemo(
+    () => fullData.find((item) => item.id === operation.currencyFrom)?.currency,
+    [fullData, operation.currencyFrom],
+  );
+  const currencyTo = useMemo(
+    () => fullData.find((item) => item.id === operation.currencyTo)?.currency,
+    [fullData, operation.currencyTo],
+  );
 
-  const renderValue = () => {
+  const renderValue = useCallback(() => {
     if ((currencyFrom && currencyTo) || currencyTo) {
       return `+${shorteredValue(operation.amountTo)} ${currencyTo}`;
     } else {
       return `-${shorteredValue(operation.amountFrom)} ${currencyFrom}`;
     }
-  };
+  }, [currencyFrom, currencyTo, operation.amountFrom, operation.amountTo]);
 
   return (
     <>
       <Root activeOpacity={0.8} onPress={() => setIsModalVisible(true)}>
-        {loading ? (
-          <Loader />
-        ) : (
-          <>
-            <IconWrapper>{filterOperations(operation, 'icon')}</IconWrapper>
-            <TextWrapper>
-              <Text variant="title18Medium">{filterOperations(operation, 'text', transactions)}</Text>
-              {type === 'exchange' && <Subtext variant="bodyBold">{`${currencyFrom} > ${currencyTo}`}</Subtext>}
-            </TextWrapper>
-            <ValueWrapper>
-              <StatusWrapper>
-                <Text variant="title18Medium">{renderValue()}</Text>
-                {statusIconMapping[status]}
-              </StatusWrapper>
+        <IconWrapper>{filterOperations(operation, 'icon')}</IconWrapper>
+        <TextWrapper>
+          <Text variant="title18Medium">{filterOperations(operation, 'text', transactions)}</Text>
+          {type === 'exchange' && <Subtext variant="bodyBold">{`${currencyFrom} > ${currencyTo}`}</Subtext>}
+        </TextWrapper>
+        <ValueWrapper>
+          <StatusWrapper>
+            <Text variant="title18Medium">{renderValue()}</Text>
+            {statusIconMapping[status]}
+          </StatusWrapper>
 
-              {type === 'exchange' && (
-                <Subtext variant="bodyBold">{`-${shorteredValue(operation.amountFrom)} ${currencyFrom}`}</Subtext>
-              )}
-            </ValueWrapper>
-          </>
-        )}
+          {type === 'exchange' && (
+            <Subtext variant="bodyBold">{`-${shorteredValue(operation.amountFrom)} ${currencyFrom}`}</Subtext>
+          )}
+        </ValueWrapper>
       </Root>
       {isModalVisible && (
         <ModalForOperations

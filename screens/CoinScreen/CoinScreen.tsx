@@ -1,8 +1,6 @@
-import { Currencies } from '__generated__/types';
 import { StartIcon } from 'assets/svgs';
 import { useGetCoinInfo } from 'common/queries/__generated__/get-coin-info.query';
 import { useGetFavoriteCurrencies } from 'common/queries/__generated__/get-favorite-currencies.query';
-import { useGetMeCurrencies } from 'common/queries/__generated__/get-me-currencies.query';
 import { useGetTransactions } from 'common/queries/__generated__/get-transactions.query';
 import { useToggleFavoriteCurrency } from 'common/queries/__generated__/toggle-favorite-currency.query';
 import { DefaultLayout, NestedHeader } from 'layouts';
@@ -12,11 +10,13 @@ import AppRoutes from 'navigations/routes';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshControl } from 'react-native';
-import styled, { useTheme } from 'styled-components/native';
+import { useTheme } from 'styled-components/native';
 import { Language, ScreenBaseProps } from 'types';
 import { IconButton, Loader } from 'ui';
 
 import { BalanceCoin, CurrencyTabs, Operations } from './components';
+import { useSelector } from 'react-redux';
+import { selectors } from 'store';
 
 type CoinScreenNavigationProps = ScreenBaseProps<
   AppRoutes.CurrencyCoinScreen | AppRoutes.HomeCoinScreen,
@@ -29,11 +29,7 @@ const CoinScreen: React.FC<CoinScreenProps> = ({ route, navigation }) => {
   const { colors } = useTheme();
   const locale = i18n.language as Language;
   const [isFavorite, setIsFavorite] = useState(false);
-  const { data, loading } = useGetMeCurrencies({
-    fetchPolicy: 'cache-only',
-  });
-  const fullData = [...(data?.currencies || []), ...(data?.fetchDexCurrencies || [])];
-  const filteredCoin = fullData.find((item) => item.currency === route.params.currency) as Currencies;
+  const currency = useSelector(selectors.currencies.selectCurrencyByName(route.params.currency));
   const { data: favoriteCurrenciesResp, loading: loadingFavorite } = useGetFavoriteCurrencies({
     fetchPolicy: 'cache-and-network',
   });
@@ -61,16 +57,16 @@ const CoinScreen: React.FC<CoinScreenProps> = ({ route, navigation }) => {
 
   useEffect(() => {
     if (favoriteCurrenciesResp?.favoriteCurrencies) {
-      const item = favoriteCurrenciesResp?.favoriteCurrencies.find((item) => item.currency === route.params.currency);
+      const item = favoriteCurrenciesResp?.favoriteCurrencies.find((c) => c.currency === route.params.currency);
       !!item?.favorite && setIsFavorite(item?.favorite);
     }
-  }, [favoriteCurrenciesResp?.favoriteCurrencies]);
+  }, [favoriteCurrenciesResp?.favoriteCurrencies, route.params.currency]);
 
   const goBack = () => {
     navigation.goBack();
   };
 
-  const renderFavoritIcon = () => {
+  const renderFavoriteIcon = () => {
     return (
       <IconButton
         Icon={() =>
@@ -89,28 +85,26 @@ const CoinScreen: React.FC<CoinScreenProps> = ({ route, navigation }) => {
 
   return (
     <DefaultLayout>
-      <NestedHeader withBack goBack={goBack} renderRightElement={renderFavoritIcon} />
-      {loading || loadingTransactions || loadInfo ? (
-        <LoaderWrapper color={colors.primaryBlack} />
-      ) : (
-        <DefaultLayout.ScrollView
-          refreshControl={<RefreshControl refreshing={loadingTransactions} onRefresh={refetch} />}
-        >
-          <BalanceCoin currency={filteredCoin} />
-          <Operations data={filteredCoin} />
-          <CurrencyTabs
-            operations={operations?.getTransactions}
-            coinInfo={coinInfo?.getCoinInfo}
-            currency={filteredCoin}
-          />
-        </DefaultLayout.ScrollView>
-      )}
+      <NestedHeader
+        withBack
+        goBack={goBack}
+        renderRightElement={route.params.withFavoriteIcon ? renderFavoriteIcon : undefined}
+      />
+      <DefaultLayout.ScrollView
+        refreshControl={<RefreshControl refreshing={loadingTransactions} onRefresh={refetch} />}
+      >
+        <BalanceCoin currency={currency} />
+        <Operations data={currency} />
+        <CurrencyTabs
+          operations={operations?.getTransactions}
+          coinInfo={coinInfo?.getCoinInfo}
+          currency={currency}
+          isLoadInfo={loadInfo}
+          isLoadingTransactions={loadingTransactions}
+        />
+      </DefaultLayout.ScrollView>
     </DefaultLayout>
   );
 };
-
-const LoaderWrapper = styled(Loader)`
-  margin: auto;
-`;
 
 export default CoinScreen;

@@ -15,17 +15,17 @@ type AboutCoinProps = {
 const AboutCoin: React.FC<AboutCoinProps> = ({ coin, info, alias, contract }) => {
   return (
     <MainToken>
-      {!info.success && !contract ? (
+      {!info?.success && !contract ? (
         <EmptyInfo variant="title16Medium">{coin.tabs.about.emptyInfo}</EmptyInfo>
       ) : (
         <>
-          {info.content && (
+          {info?.content && (
             <TextBlock margin>
               <BoldText variant="title18Bold">{alias}</BoldText>
               <HTMLView value={`<div>${info.content}</div>`} stylesheet={styles} />
             </TextBlock>
           )}
-          {info.official_url && (
+          {info?.official_url && (
             <TextBlock margin>
               <BoldText variant="title18Bold">{coin.tabs.about.site}</BoldText>
               <Text variant="bodyRegular">{info.official_url}</Text>
